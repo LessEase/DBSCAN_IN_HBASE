@@ -107,6 +107,7 @@ class IncDBSCAN(object):
 
         #Noise
         if len(UpSeeds) == 0:
+            print 'Noise', p
             for PtId in neighbors:
                 if self.numOfNeighbors[PtId] >= self.MinPts:
                     self.clusterId[-1] = self.clusterId[PtId]
@@ -116,8 +117,9 @@ class IncDBSCAN(object):
             clusterInUpSeeds = clusterSetOfUpSeeds.pop()
             #Creation
             if clusterInUpSeeds == 0:
+                print 'Creation' ,p
                 visited = [0 for i in range(len(UpSeeds))]
-                for i in range(len(UpSeeds)-1):
+                for i in range(0,len(UpSeeds)):
                     if visited[i] == 0:
                         visited[i] = 1
                         self.clusterId[UpSeeds[i]] = self.nextClusterId
@@ -129,6 +131,7 @@ class IncDBSCAN(object):
                     
             #Absorption
             else:
+                print 'Absorption' , p
                 self.clusterId[-1] = clusterInUpSeeds
                 for PtId in UpSeeds:
                     if PtId in noiseInNeighbor:
@@ -137,6 +140,7 @@ class IncDBSCAN(object):
         else:
             #Merge
 
+            print 'Merge', p
             if 0 in clusterSetOfUpSeeds:
                 visited = [0 for i in range(len(UpSeeds))]
                 for i in range(len(UpSeeds)-1):
@@ -159,8 +163,13 @@ class IncDBSCAN(object):
             self.clusterId[-1] = self.clusterId[UpSeeds[0]]
 
         #Expand
+        print noiseInNeighbor
+
+        for i in range(len(self.dataset)):
+            print self.clusterId[i], self.dataset[i], self.numOfNeighbors[i]
         for Pt in noiseInNeighbor:
             for noisePt in noiseInNeighbor[Pt]:
+                print Pt,noisePt
                 if self.clusterId[noisePt] == 0:
                     self.clusterId[noisePt] = self.clusterId[Pt]
         
@@ -187,7 +196,7 @@ if __name__ == "__main__":
 
     import doctest 
     doctest.testmod()
-    dbscaner = IncDBSCAN(2.9, 3)
+    dbscaner = IncDBSCAN(2.9, 4)
     counter = 0
     with open('data', 'r') as f:
         for line in f:
