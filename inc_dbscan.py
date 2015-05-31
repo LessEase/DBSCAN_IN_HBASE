@@ -86,29 +86,32 @@ class IncDBSCAN(object):
         clusterSetOfUpSeeds = set()
         noiseInNeighbor = {}
         for PtId in neighbors:
-            if self.numOfNeighbors[PtId] == self.MinPts:
+            if self.numOfNeighbors[PtId] == self.MinPts and PtId != len(self.dataset) - 1:
                 UpSeeds.append(PtId)
                 clusterSetOfUpSeeds.add(self.clusterId[PtId])
 
         end = len(UpSeeds)
         alreadyIn = set(UpSeeds)
         for i in range(0,end):
-            if UpSeeds[i] == len(self.dataset) - 1:
-                continue
             currentNeighbors = self._retrieve_neighbors(UpSeeds[i])
             for PtId in currentNeighbors:
-                if self.numOfNeighbors[PtId] >= self.MinPts and PtId not in alreadyIn:
+                if self.numOfNeighbors[PtId] >= self.MinPts+1 and PtId not in alreadyIn:
                     UpSeeds.append(PtId)
                     alreadyIn.add(PtId)
+                    clusterSetOfUpSeeds.add(self.clusterId[PtId])
                 if self.clusterId[PtId] == 0:
                     if UpSeeds[i] not in noiseInNeighbor:
                         noiseInNeighbor[UpSeeds[i]] = set()
                     noiseInNeighbor[UpSeeds[i]].add(PtId)
 
+
         #Noise
         if len(UpSeeds) == 0:
-            print 123
-            self.clusterId[-1] = 0
+            for PtId in neighbors:
+                if self.numOfNeighbors[PtId] >= self.MinPts:
+                    self.clusterId[-1] = self.clusterId[PtId]
+                    break
+
         elif len(clusterSetOfUpSeeds) == 1: 
             clusterInUpSeeds = clusterSetOfUpSeeds.pop()
             #Creation
@@ -131,10 +134,24 @@ class IncDBSCAN(object):
                     if PtId in noiseInNeighbor:
                         for noiseId in noiseInNeighbor[PtId]:
                             self.clusterId[noiseId] = clusterInUpSeeds
-        #Merge
-        if len(UpSeeds) != 0:
+        else:
+            #Merge
+
+            if 0 in clusterSetOfUpSeeds:
+                visited = [0 for i in range(len(UpSeeds))]
+                for i in range(len(UpSeeds)-1):
+                    if visited[i] == 0 and self.clusterId[UpSeeds[i]] == 0:
+                        visited[i] = 1
+                        self.clusterId[UpSeeds[i]] = self.nextClusterId
+                        self.nextClusterId += 1
+                        for j in range(i+1, len(UpSeeds)):
+                            if visited[j] == 0 and self.clusterId[UpSeeds[j]]== 0 \
+                                    and self._isNeighbor(UpSeeds[i], UpSeeds[j]):
+                                visited[j] = 1
+                                self.clusterId[UpSeeds[j]] = self.clusterId[UpSeeds[i]]
+
             for i in range(0, len(UpSeeds)-1):
-                for j in range(i, len(UpSeeds)):
+                for j in range(i+1, len(UpSeeds)):
                     if self._isNeighbor(UpSeeds[i], UpSeeds[j]) \
                         and self.clusterId[UpSeeds[i]] != self.clusterId[UpSeeds[j]]:
                         self._merge(self.clusterId[UpSeeds[i]],self.clusterId[UpSeeds[j]])
@@ -143,9 +160,10 @@ class IncDBSCAN(object):
 
         #Expand
         for Pt in noiseInNeighbor:
-            for noisePt in noiseInNeighbor:
+            for noisePt in noiseInNeighbor[Pt]:
                 if self.clusterId[noisePt] == 0:
                     self.clusterId[noisePt] = self.clusterId[Pt]
+        
 
     def _merge(self, clusterId1, clusterId2):
         '''
@@ -169,16 +187,17 @@ if __name__ == "__main__":
 
     import doctest 
     doctest.testmod()
-    dbscaner = IncDBSCAN(5.0, 4)
+    dbscaner = IncDBSCAN(2.9, 3)
+    counter = 0
     with open('data', 'r') as f:
         for line in f:
+            if counter == 22: 
+                break
             dataitem = map(float, line.strip().split())
             dbscaner.inc_cluster(dataitem)
+            counter += 1
 
-    for clusterId in dbscaner.clusterId:
-        print clusterId
+    for i in range(0, len(dbscaner.dataset)):
+        print dbscaner.clusterId[i], dbscaner.dataset[i], dbscaner.numOfNeighbors[i]
 
 
-
-    
-    
