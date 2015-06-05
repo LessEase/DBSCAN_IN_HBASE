@@ -70,7 +70,7 @@ class DBSCAN(object):
 if __name__ == "__main__":
 
     dataset = []
-    dbscaner = DBSCAN(5.0, 4)
+    dbscaner = DBSCAN(2.9, 4)
     with open("data",'r') as f:
         for line in f:
             dataset.append(map(float, line.strip().split()))
