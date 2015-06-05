@@ -1,0 +1,21 @@
+
+option java_package = "org.dbscan";
+
+option java_outer_classname = "getNeighbors";
+option java_generic_services = true;
+option optimize_for = SPEED;
+
+
+message getNeighborsRequest{
+	required string data = 1;
+}
+
+message getNeighborsResponse{
+	
+	repeated string datas = 1;
+}
+
+service dbscanService{
+	rpc getNeighbours(getNeighborsRequest)
+		returns (getNeighborsResponse);
+}
